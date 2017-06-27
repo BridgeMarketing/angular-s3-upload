@@ -1,6 +1,6 @@
 'use strict';
 
-var directives = angular.module('directives', []);
+var directives = angular.module('app.directives', []);
 
 directives.directive('file', function() {
   return {
