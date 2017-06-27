@@ -39,7 +39,13 @@ angular.module('app.services', [])
                         ClientId: config.ClientId
                     };
 
-                    var  userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool( poolData );
+                    try {
+                        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(poolData);
+                    } catch (e) {
+                        return {
+                            error: e
+                        };
+                    }
 
                     return userPool.getCurrentUser();
                 },

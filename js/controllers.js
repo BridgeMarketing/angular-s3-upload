@@ -13,71 +13,78 @@ controllers.controller('loginController', ['$scope', 'config', '$location', 'Use
     console.log('cognitoUser');
     console.log(cognitoUser);
 
-    if (cognitoUser !== null) {
-        window.location = '/#/';
+    if(cognitoUser && cognitoUser.error){
+        $scope.color = 'red';
+        $scope.message = cognitoUser.error.message;
+    }else{
+
+        if (cognitoUser !== null) {
+            window.location = '/#/';
+        }
+
+        $scope.login = function () {
+            $scope.loading = true;
+            $scope.message = '';
+            var authenticationData = {
+                Username: $scope.user_id,
+                Password: $scope.password
+            };
+
+
+            var UserObj = User.signIn(authenticationData);
+
+            UserObj.cognitoUser.authenticateUser(UserObj.authenticationDetails, {
+                onSuccess: function (result) {
+                    //  console.log(result);
+                    // console.log('access token + ' + result.getAccessToken().getJwtToken());
+                    /*Use the idToken for Logins Map when Federating User Pools
+                     with Cognito Identity or when passing through an
+                     Authorization Header to an API Gateway Authorizer*/
+
+                    // $scope.idToken = result.idToken.jwtToken;
+                    // console.log('idToken + ' + $scope.idToken);
+                    // $scope.message = $scope.idToken;
+                    // $scope.color = 'green';
+                    // $scope.loading = false;
+                    // $scope.$apply();
+                    //$location.path('/zzz');
+                    window.location = '/#/';
+                    //localStorage['CognitoIdentityServiceProvider.1iall4mjj9kgta6vbucrjo0o6.LastAuthUser']
+
+                },
+
+                onFailure: function (err) {
+                    console.error('error');
+                    console.log(err);
+                    $scope.color = 'red';
+                    $scope.message = err.toString();
+                    $scope.loading = false;
+                    $scope.$apply();
+                },
+
+                newPasswordRequired: function (userAttributes, requiredAttributes) {
+                    //just reset password with same passwor for now
+                    //todo real reset?
+                    // User was signed up by an admin and must provide new
+                    // password and required attributes, if any, to complete
+                    // authentication.
+
+                    // the api doesn't accept this field back
+                    delete userAttributes.email_verified;
+
+                    userAttributes.email  = $scope.user_id;
+
+                    console.log(userAttributes);
+
+                    // Get these details and call
+                    UserObj.cognitoUser.completeNewPasswordChallenge($scope.password, userAttributes, this);
+                }
+
+            });
+
+        }
     }
 
-    $scope.login = function () {
-        $scope.loading = true;
-        $scope.message = '';
-        var authenticationData = {
-            Username: $scope.user_id,
-            Password: $scope.password
-        };
-
-
-        var UserObj = User.signIn(authenticationData);
-
-        UserObj.cognitoUser.authenticateUser(UserObj.authenticationDetails, {
-            onSuccess: function (result) {
-                //  console.log(result);
-                // console.log('access token + ' + result.getAccessToken().getJwtToken());
-                /*Use the idToken for Logins Map when Federating User Pools
-                 with Cognito Identity or when passing through an
-                 Authorization Header to an API Gateway Authorizer*/
-
-                // $scope.idToken = result.idToken.jwtToken;
-                // console.log('idToken + ' + $scope.idToken);
-                // $scope.message = $scope.idToken;
-                // $scope.color = 'green';
-                // $scope.loading = false;
-                // $scope.$apply();
-                //$location.path('/zzz');
-                window.location = '/#/';
-                //localStorage['CognitoIdentityServiceProvider.1iall4mjj9kgta6vbucrjo0o6.LastAuthUser']
-
-            },
-
-            onFailure: function (err) {
-                console.error('error');
-                console.log(err);
-                $scope.color = 'red';
-                $scope.message = err.toString();
-                $scope.loading = false;
-                $scope.$apply();
-            },
-
-            newPasswordRequired: function (userAttributes, requiredAttributes) {
-                //just reset password with same passwor for now
-                //todo real reset?
-                // User was signed up by an admin and must provide new
-                // password and required attributes, if any, to complete
-                // authentication.
-
-                // the api doesn't accept this field back
-                delete userAttributes.email_verified;
-
-                userAttributes.email  = $scope.user_id;
-
-                console.log(userAttributes);
-
-                // Get these details and call
-                UserObj.cognitoUser.completeNewPasswordChallenge($scope.password, userAttributes, this);
-            }
-
-        });
-
-    }
 
 
 }]);
@@ -90,7 +97,7 @@ controllers.controller('uploadController', ['$scope', '$location', 'User', funct
     console.log('cognitoUser');
     console.log($scope.cognitoUser);
 
-    if ($scope.cognitoUser === null) {
+    if ($scope.cognitoUser === null || $scope.cognitoUser.error) {
         $location.path('/login');
     }
 
