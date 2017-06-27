@@ -4,10 +4,11 @@ var controllers = angular.module('app.controllers', []);
 
 
 controllers.controller('loginController', ['$scope', 'config', '$location', 'User', function ($scope, config, $location, User) {
-    $scope.user_id = 'lev.savranskiy@thebridgecorp.com';
-    $scope.password = '';
+    $scope.user_id = 'Lev.Savranskiy@gmail.com';
+    $scope.password = '123456';
     $scope.loading = false;
     var cognitoUser = User.getSessionUser();
+    var authenticationDetails;
 
     console.log('cognitoUser');
     console.log(cognitoUser);
@@ -23,20 +24,11 @@ controllers.controller('loginController', ['$scope', 'config', '$location', 'Use
             Username: $scope.user_id,
             Password: $scope.password
         };
-        var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
-        var poolData = {
-            UserPoolId: config.UserPoolId,
-            ClientId: config.ClientId
-        };
-        var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(poolData);
-        var userData = {
-            Username: $scope.user_id,
-            Pool: userPool
-        };
-        var cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
 
 
-        cognitoUser.authenticateUser(authenticationDetails, {
+        var UserObj = User.signIn(authenticationData);
+
+        UserObj.cognitoUser.authenticateUser(UserObj.authenticationDetails, {
             onSuccess: function (result) {
                 //  console.log(result);
                 // console.log('access token + ' + result.getAccessToken().getJwtToken());
@@ -75,8 +67,12 @@ controllers.controller('loginController', ['$scope', 'config', '$location', 'Use
                 // the api doesn't accept this field back
                 delete userAttributes.email_verified;
 
+                userAttributes.email  = $scope.user_id;
+
+                console.log(userAttributes);
+
                 // Get these details and call
-                cognitoUser.completeNewPasswordChallenge($scope.password, userAttributes, this);
+                UserObj.cognitoUser.completeNewPasswordChallenge($scope.password, userAttributes, this);
             }
 
         });

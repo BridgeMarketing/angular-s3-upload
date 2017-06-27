@@ -23,7 +23,7 @@ var app = angular.module('app', [
 }]).constant("config", {
     BucketName: 'bridge-js-dev',
     BucketRegion: 'us-east-1',
-    IdentityPoolId: 'todo',
+    IdentityPoolId: 'us-east-1:0de6bc90-61f4-4d76-b927-4df919aaadaf',
     UserPoolId: 'us-east-1_Wlk37rDtN',
     ClientId : '1iall4mjj9kgta6vbucrjo0o6'
 });

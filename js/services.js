@@ -9,11 +9,11 @@ angular.module('app.services', [])
             var u = {
 
 
-                signOut: function (u) {
+                signOut: function () {
                     u.getSessionUser().signOut();
                 },
 
-                auth: function () {
+                signIn: function (authenticationData) {
                     var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
                     var poolData = {
                         UserPoolId: config.UserPoolId,
@@ -21,10 +21,15 @@ angular.module('app.services', [])
                     };
                     var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(poolData);
                     var userData = {
-                        Username: u.user_id,
+                        Username: authenticationData.Username,
                         Pool: userPool
                     };
                     var cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
+
+                    return {
+                        cognitoUser: cognitoUser,
+                        authenticationDetails: authenticationDetails
+                    }
 
                 },
 
