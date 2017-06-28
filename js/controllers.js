@@ -3,6 +3,7 @@
 var controllers = angular.module('app.controllers', []);
 
 
+
 controllers.controller('loginController', ['$scope', 'config', '$location', 'User', function ($scope, config, $location, User) {
 
 
@@ -55,71 +56,143 @@ controllers.controller('loginController', ['$scope', 'config', '$location', 'Use
 }]);
 
 
-
-
-
 controllers.controller('mainController', ['$scope', '$location', 'User', 'config', function ($scope, $location, User, config) {
 
     $scope.user = User.get();
-    $scope.color = 'blue';
-    $scope.message = 'Loading...';
-    $scope.Contents =[];
+
+    $scope.Contents = [];
+    $scope.s3url = 'https://console.aws.amazon.com/s3/buckets/' + config.BucketName + '/';
 
 
     AWS.config.credentials = User.getCredentials($scope.user);
-    var bucket = new AWS.S3( {params: {
-        Bucket: config.BucketName,
-        Tag: [{Key: 'Partner', Value: 'Lev' }],
-        //Prefix: 'JUNE'
-    }});
-
-
-    var params = {
-        Bucket: config.BucketName,
-        Key: "HappyFace.jpg"
-    };
-    // bucket.getBucketLifecycleConfiguration(params, function(err, data) {
-    //     console.log('[getBucketLifecycleConfiguration]');
-    //     console.log(err);
-    //     console.log(data);
-    //
-    // });
-
-
-
-    bucket.listObjects(function (err, data) {
-        console.log('[listObjects]');
-        console.log(err);
-        console.log(data);
-
-        if (err) {
-            $scope.color = 'red';
-            $scope.message = err.message || (err.originalError && err.originalError.originalError && err.originalError.originalError.message) || 'Exception. Try to relogin.';
-
-        } else {
-            $scope.Contents = data.Contents;
-            $scope.color = 'green';
-            $scope.message = '' + config.BucketName;
-        }
-        $scope.$apply();
-    });
 
 
     $scope.logout = function () {
 
         User.signOut();
-       // $location.path('/login');
+        // $location.path('/login');
         window.location = '/#/login'
     };
 
-    $scope.sizeLimit = 10585760; // 10MB in Bytes
+    $scope.sizeLimit = 100000000; // 10MB in Bytes
     $scope.uploadProgress = 0;
     $scope.creds = {};
+    var bucket = new AWS.S3({
+        params: {
+            Bucket: config.BucketName,
+            //Tag: [{Key: 'Partner', Value: 'Lev'}]
+            //Prefix: 'JUNE'
+        }
+    });
+    $scope.getData = function () {
+
+        $scope.color = 'blue';
+        $scope.message = 'Loading...';
+        $scope.loading = true;
+
+
+
+        $scope.tags = {};
+
+        bucket.listObjects(function (err, data) {
+            console.log('[listObjects]');
+            console.log(err);
+            console.log(data);
+
+            if (err) {
+                $scope.color = 'red';
+                $scope.message = err.message || (err.originalError && err.originalError.originalError && err.originalError.originalError.message);
+                $scope.message += ' error. Try to relogin.'
+
+            } else {
+                $scope.Contents = data.Contents;
+                angular.forEach(data.Contents, function (item, key) {
+
+                    var params = {
+                        Bucket: config.BucketName,
+                        Key: item.Key
+                    };
+
+                    var arr = item.Key.split('/');
+                    //console.log(arr);
+
+                    item.Filename = arr[arr.length - 1].length ? arr[arr.length - 1] : arr.join(' / ');
+                    item.Filename = item.Key;
+                    item.pathlength = arr.length;
+
+                    if(item.Size>0){
+                        bucket.getObjectTagging(params, function (err, data) {
+                            //console.log('---');
+                            //console.log('[getObjectTagging ]' + item.Key);
+                            if (!err) {
+
+                                $scope.tags[item.Key] = data.TagSet;
+                                $scope.$apply();
+                                angular.forEach(data.TagSet, function (item, key) {
+                                    console.log(item);
+                                })
+                            } else {
+                                console.error(err);
+                            }
+                        });
+                    }else{
+                        //delete data.Contents[key];
+                    }
+
+                });
+
+                $scope.color = 'green';
+                $scope.message = '' + config.BucketName;
+            }
+            $scope.loading = false;
+            $scope.$apply();
+
+        });
+    };
+
+    $scope.getData();
+
+    $scope.edit = function () {
+        alert('todo');
+    }
+
+    $scope.download = function (item) {
+        var params = {
+            Bucket: config.BucketName,
+            Key: item.Key
+        };
+        bucket.getObject(params, function(err, data) {
+            console.log('getObject');
+            console.log(err);
+            console.log(data);
+            // if (err){
+            //     toastr.error(err, 'Error');
+            // }else{
+            //     toastr.success('File was deleted', 'Done');
+            //     $scope.getData();
+            // }
+        });
+    }
+    $scope.unlink = function (item) {
+        var r = confirm("Are you sure you want to delete this file?");
+        if (r === true) {
+            var params = {
+                Bucket: config.BucketName,
+                Key: item.Key
+            };
+            bucket.deleteObject(params, function(err, data) {
+                if (err){
+                    toastr.error(err, 'Error');
+                }else{
+                    toastr.success('File was deleted', 'Done');
+                    $scope.getData();
+                }
+            });
+        }
+    }
 
     $scope.upload = function () {
-        AWS.config.update({accessKeyId: $scope.creds.access_key, secretAccessKey: $scope.creds.secret_key});
-        AWS.config.region = 'us-east-1';
-        var bucket = new AWS.S3({params: {Bucket: $scope.creds.bucket}});
+
 
         if ($scope.file) {
             // Perform File Size Check First
@@ -129,14 +202,19 @@ controllers.controller('mainController', ['$scope', '$location', 'User', 'config
                 return false;
             }
             // Prepend Unique String To Prevent Overwrites
-            var uniqueFileName = $scope.uniqueString() + '-' + $scope.file.name;
+            var FileName = $scope.prefix() + $scope.file.name;
+
+
 
             var params = {
-                Key: uniqueFileName,
+                Key: FileName,
                 ContentType: $scope.file.type,
                 Body: $scope.file,
                 ServerSideEncryption: 'AES256'
             };
+
+            console.log(FileName);
+            //return;
 
             bucket.putObject(params, function (err, data) {
                 if (err) {
@@ -152,6 +230,7 @@ controllers.controller('mainController', ['$scope', '$location', 'User', 'config
                         $scope.uploadProgress = 0;
                         $scope.$digest();
                     }, 4000);
+                    $scope.getData();
                 }
             })
                 .on('httpUploadProgress', function (progress) {
@@ -170,13 +249,12 @@ controllers.controller('mainController', ['$scope', '$location', 'User', 'config
         return Math.round($scope.sizeLimit / 1024 / 1024) + 'MB';
     };
 
-    $scope.uniqueString = function () {
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-        for (var i = 0; i < 8; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
+    $scope.prefix = function () {
+        var date = new Date();
+        var d = date.getDate();
+        var m = date.getMonth() + 1;
+        var y = date.getFullYear();
+        var text =   y + "/" + m + "/" + d + "/";
         return text;
     }
 
