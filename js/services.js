@@ -1,18 +1,58 @@
 angular.module('app.services', [])
 
 
-
-
-    .factory('User', ['$q', '$http', '$window',  '$location', 'config',
-        function ($q, $http, $window,  $location, config) {
+    .factory('User', ['$q', '$http', '$window', '$location', 'config',
+        function ($q, $http, $window, $location, config) {
 
             var u = {
 
-
                 signOut: function () {
-                    u.getSessionUser().signOut();
+                    //todo
+                    localStorage.clear();
+                    sessionStorage.clear();
+                  // var obj = {
+                    //     id_token: u.get().id_token
+                    // }
+                    // u.getCredentials(obj).clearCachedId();
                 },
 
+                set: function (obj) {
+                    window.sessionStorage.email = obj.email;
+                    window.sessionStorage.id_token = obj.id_token;
+                    window.sessionStorage.avatar = obj.avatar;
+                    window.sessionStorage.accessKeyId = obj.accessKeyId;
+                    window.sessionStorage.sessionToken = obj.sessionToken;
+                    console.info('----USER SET----');
+                    console.log(obj);
+                },
+
+                get: function () {
+                    var obj = {};
+                    obj.email = window.sessionStorage.email;
+                    obj.id_token = window.sessionStorage.id_token;
+                    obj.avatar = window.sessionStorage.avatar;
+                    obj.accessKeyId = window.sessionStorage.accessKeyId;
+                    obj.sessionToken = window.sessionStorage.sessionToken;
+                    console.info('----USER GET----');
+                    console.log(obj);
+                    return obj;
+                },
+
+
+
+                getCredentials: function (currentUser) {
+                    // Initialize the Amazon Cognito credentials provider
+                    AWS.config.region = config.PoolRegion; // Region
+                    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                        IdentityPoolId: config.IdentityPoolId,
+                        Logins: {
+                            'accounts.google.com': currentUser.id_token
+                        }
+                    });
+                    return AWS.config.credentials;
+                },
+
+                //not in use
                 signIn: function (authenticationData) {
                     var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
                     var poolData = {
@@ -51,7 +91,6 @@ angular.module('app.services', [])
                 },
 
 
-
                 store: function (data) {
                     $window.sessionStorage.role = data.role;
                     $window.sessionStorage.id = data.id;
@@ -69,8 +108,6 @@ angular.module('app.services', [])
 
             return u;
         }])
-
-
 
 
     .factory('storage', function () {

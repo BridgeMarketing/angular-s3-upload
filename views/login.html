@@ -1,30 +1,11 @@
-
-<div class="container center_div">
-
-    <div class="" id="login-form">
-
-        <form name="myForm">
-            <div class="form-group">
-                <label for="user_id" style="font-size: 24px;">Bridge Marketing Data Repo Login</label>
-                <input  required type="email" class="form-control" id="user_id" placeholder="email" ng-model="user_id" style="width: 333px;">
-                <input  required type="password"  ng-minlength="6"  class="form-control" id="password" placeholder="password" ng-model="password" style="width: 333px;">
-
-                <button ng-hide="loading" type="submit" class="btn btn-default"
-                        ng-click="login()"
-                        ng-disabled="!myForm.$valid"
-                        style="text-align: left;">Submit</button>
-                <span ng-show="loading"><img src="/images/clock-loading.gif"/></span>
-
-                <!--<p><a href="/#/recover">Reset password</a></p>-->
-            </div>
-        </form>
-        <!--<tt>myForm.$valid = {{myForm.$valid}}</tt><br/>-->
-        <!--<tt>myForm.$error.required = {{!!myForm.$error}}</tt><br/>-->
-        <div ng-style="{'color': color}">{{message}}</div>
-
-
-
-    </div>
-
-
+<div class="center_div_login">
+    <h1>Bridge Marketing Data Repo
+        <small>Login</small>
+    </h1>
+    <google-sign-in-button button-id="gid" options="options"></google-sign-in-button>
+    <div ng-style="{'color': color}">{{message}} <img src="{{avatar}}" ng-show="logged" width="32"/></div>
 </div>
+
+
+
+
