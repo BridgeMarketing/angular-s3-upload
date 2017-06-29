@@ -89,7 +89,7 @@ controllers.controller('mainController', ['$scope', '$location', 'User', 'config
         $scope.color = 'blue';
         $scope.message = 'Loading...';
         $scope.loading = true;
-
+        $scope.error = false;
 
 
         $scope.tags = {};
@@ -159,19 +159,16 @@ controllers.controller('mainController', ['$scope', '$location', 'User', 'config
     $scope.download = function (item) {
         var params = {
             Bucket: config.BucketName,
-            Key: item.Key
+            Key: item.Key,
+            Expires: 60
         };
-        bucket.getObject(params, function(err, data) {
-            console.log('getObject');
-            console.log(err);
-            console.log(data);
-            // if (err){
-            //     toastr.error(err, 'Error');
-            // }else{
-            //     toastr.success('File was deleted', 'Done');
-            //     $scope.getData();
-            // }
+
+
+        bucket.getSignedUrl('getObject', params, function (err, url) {
+            console.log('getSignedUrl', url);
+            window.open(url, "_blank");
         });
+
     }
     $scope.unlink = function (item) {
         var r = confirm("Are you sure you want to delete this file?");

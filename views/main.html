@@ -71,9 +71,12 @@
 
                 <tr ng-repeat="item in Contents track by $index" ng-show="item.Size>0">
                     <td>&nbsp;&nbsp;<span class="glyphicon glyphicon-edit pointer" title="Edit file tags" ng-click="edit(item)"></span>
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-trash pointer" title="Delete file"  ng-click="unlink(item)"></span></td>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-download pointer" title="Download file"  ng-click="download(item)"></span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-trash pointer" title="Delete file"  ng-click="unlink(item)"></span>
+
+                    </td>
                     <td ng-show="item.Size===0"><span class="glyphicon glyphicon-folder-open"></span>&nbsp;&nbsp;{{item.Filename}}</td>
-                    <td ng-hide="item.Size===0"><span style="text-decoration: underline;" ng-click="download(item)">{{item.Filename}}</span></td>
+                    <td ng-hide="item.Size===0">{{item.Filename}}</td>
                     <td ng-show="item.Size===0">-</td>
                     <td ng-hide="item.Size===0">{{item.Size/1000}} kB</td>
                     <td>{{item.LastModified}}</td>
